@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./vars.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.7.3/dist/web3.min.js"></script>
+  
+  <style>
+   a,
+   button,
+   input,
+   select,
+   h1,
+   h2,
+   h3,
+   h4,
+   h5,
+   * {
+       box-sizing: border-box;
+       margin: 0;
+       padding: 0;
+       border: none;
+       text-decoration: none;
+       background: none;
+   
+       -webkit-font-smoothing: antialiased;
+   }
+   
+   menu, ol, ul {
+       list-style-type: none;
+       margin: 0;
+       padding: 0;
+   }
+        body {
+  zoom: 80%;
+}
+
+   </style>
+  <title>Threat Detection</title>
+</head>
+<body>
+  <div class="frame-6">
+    <img
+      class="sl-0212121-40670-68-converted"
+      src="sl-0212121-40670-68-converted0.png"
+    />
+    <div class="rectangle-9"></div>
+    <div class="anti-phishing-aml-upgraded-d-app">
+      Anti-PhishingAML 
+    </div>
+    <div class="rectangle-1">
+             <input id="recipient" placeholder="Recipient Address"
+   style="width: 100%; height: 100%; border: none; background: transparent; padding: 10px; font-size: 18px; color: black;">
+    </div>
+    <div class="frame-3">
+      <div class="frame-2">
+        <img class="rectangle-2" src="rectangle-20.svg" />
+        <button onclick="connect()" class="connect-wallet">Connect Wallet</button>
+        <p id="wallet-address" style="color:white;"></p>
+
+      </div>
+    </div>
+    <div class="send-eth-monitored">Send ETH (Monitored)</div>
+    <div class="rectangle-22">
+        <input id="amount" placeholder="Amount in ETH"
+   style="width: 100%; height: 100%; border: none; background: transparent; padding: 10px; font-size: 18px; color: black;">
+    </div>
+
+    #muc 3 ne em trai
+  
+    <div class="rectangle-3">
+     <button onclick="sendEth()" 
+    style="width: 100%; height: 100%; background: transparent; border: none; color: white; font-size: 35px; font-weight: bold; font-style: italic; cursor: pointer;">
+    Send ETH
+  </button>
+    </div>
+    
+   
+    <div class="view-my-logs-eth-erc-20">View My Logs (ETH &amp; ERC20)</div>
+   <div class="frame-22">
+  <img class="rectangle-23" src="rectangle-22.svg" />
+
+  <!-- 👇 THÊM onclick + cursor vào đây -->
+  <div class="view-logs" onclick="viewLogs()" style="cursor: pointer;">
+    View Logs
+    
+  </div>
+  <pre id="log-output"></pre>
+</div>
+    <div class="rectangle-4">
+      <input id="erc20-token" placeholder="Token Address"
+    style="width: 100%; height: 100%; padding: 10px; font-size: 18px; background: transparent; border: none; color: black;">
+    </div>
+    <div class="send-erc-20-token-monitored">Send ERC20 Token (Monitored)</div>
+    <div class="rectangle-5">
+    <input id="erc20-recipient" placeholder="Recipient Address"
+    style="width: 100%; height: 100%; padding: 10px; font-size: 18px; background: transparent; border: none; color: black;">
+    </div>
+    <div class="rectangle-7">
+       <input id="erc20-approve-amount" placeholder="Approve Amount"
+    style=" width: 100%; height: 100%; padding: 10px; font-size: 18px; background: transparent; border: none; color: black;">
+    </div>
+    
+    <div class="rectangle-8">
+       <input id="erc20-amount" placeholder="Amount (raw, e.g. 1000)"
+    style="width: 100%; height: 100%; border: none; background: transparent; padding: 10px; font-size: 18px; color: black;">
+    </div>
+   
+    <div class="rectangle-6">
+       <button onclick="sendErc20()"
+    style="width: 100%; height: 100%; background: transparent; border: none; color: white; font-size: 33px; font-weight: 800; font-style: italic; cursor: pointer;">
+    Send ERC20
+  </button>
+    </div>
+   
+   
+
+    <div class="frame-4">
+  <img class="rectangle-24" src="rectangle-23.svg" />
+  
+  <!-- ✅ Gán sự kiện onclick tại đây -->
+  <div class="approve-erc-20-to-contract" onclick="approveErc20()" style="cursor: pointer;">
+    Approve ERC20 to Contract
+  </div>
+
+  <!-- ✅ Input giữ nguyên, không chỉnh layout -->
+  <input
+    id="erc20-token"
+    placeholder="ERC20 Token Address"
+    style="position:absolute; left:-100x; top:1500px; width:380px;">
+</div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.7.3/dist/web3.min.js"></script>
+<script>
+let web3;
+let contract;
+const contractAddress = "0xD4Fc541236927E2EAf8F27606bD7309C1Fc2cbee"; 
+
+// ERC20 Minimal ABI
+const erc20Abi = [
+  {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
+  {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"}
+];
+
+let abi; // ABI sẽ load bằng fetch
+
+async function connect() {
+  if (window.ethereum) {
+    web3 = new Web3(window.ethereum);
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const accounts = await web3.eth.getAccounts();
+    document.getElementById("wallet-address").innerText = "Connected: " + accounts[0];
+    // Load ABI từ file ngoài (abi.json)
+    const response = await fetch('abi.json');
+    abi = await response.json();
+    contract = new web3.eth.Contract(abi, contractAddress);
+  } else {
+    alert("Install MetaMask first.");
+  }
+}
+
+async function sendEth() {
+  const accounts = await web3.eth.getAccounts();
+  const recipient = document.getElementById("recipient").value;
+  const amount = web3.utils.toWei(document.getElementById("amount").value, "ether");
+  try {
+    await contract.methods.monitoredTransfer(recipient)
+      .send({ from: accounts[0], value: amount });
+    alert("Transfer successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Transfer failed! " + err.message);
+  }
+}
+
+async function sendErc20() {
+  const accounts = await web3.eth.getAccounts();
+  const token = document.getElementById("erc20-token").value;
+  const recipient = document.getElementById("erc20-recipient").value;
+  const amount = document.getElementById("erc20-amount").value;
+  try {
+    await contract.methods.monitoredTransferERC20(token, recipient, amount)
+      .send({ from: accounts[0] });
+    alert("ERC20 transfer successful!");
+  } catch (err) {
+    console.error(err);
+    alert("ERC20 transfer failed! " + err.message);
+  }
+}
+
+async function approveErc20() {
+  const accounts = await web3.eth.getAccounts();
+  const token = document.getElementById("erc20-token").value;
+  const amount = document.getElementById("erc20-approve-amount").value;
+  if (!web3.utils.isAddress(token)) {
+    alert("Invalid token address!");
+    return;
+  }
+  const erc20 = new web3.eth.Contract(erc20Abi, token);
+  try {
+    await erc20.methods.approve(contractAddress, amount).send({ from: accounts[0] });
+    alert("Approve successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Approve failed! " + err.message);
+  }
+}
+
+async function viewLogs() {
+  const accounts = await web3.eth.getAccounts();
+  try {
+    console.log('a')
+    const logs = await contract.methods.getActivityHistory(accounts[0]).call();
+    // Fetch symbol for token if not ETH
+    for (let log of logs) {
+      if (log.token !== "0x0000000000000000000000000000000000000000") {
+        try {
+          const erc20 = new web3.eth.Contract(erc20Abi, log.token);
+          log.tokenSymbol = await erc20.methods.symbol().call();
+        } catch (e) { log.tokenSymbol = "(Unknown token)"; }
+      } else {
+        log.tokenSymbol = "ETH";
+      }
+      // Risk level name
+      log.riskName = ["Safe", "Suspicious", "Blacklisted"][log.risk] || log.risk;
+      // Convert timestamp to readable
+      log.time = new Date(log.timestamp * 1000).toLocaleString();
+    }
+    let pretty = logs.map(l => 
+      `[${l.time}] ${l.amount} ${l.tokenSymbol} | from: ${l.from.slice(0,6)}... to: ${l.to.slice(0,6)}... | risk: ${l.riskName}`
+    ).join('\n');
+    document.getElementById("log-output").innerText = pretty || "(No logs)";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("log-output").innerText = "Error loading logs.";
+  }
+}
+
+// Admin - Freeze
+async function freezeAccount() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-freeze-addr").value;
+  const freeze = document.getElementById("admin-freeze-val").value === "true";
+  try {
+    await contract.methods.freezeAccount(user, freeze)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-freeze-result").innerText = "Freeze updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-freeze-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Admin - Whitelist
+async function setWhitelist() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-wl-addr").value;
+  const wl = document.getElementById("admin-wl-val").value === "true";
+  try {
+    await contract.methods.setWhitelist(user, wl)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-wl-result").innerText = "Whitelist updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-wl-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Admin - Set Risk Status
+async function setRiskStatus() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-risk-addr").value;
+  const risk = parseInt(document.getElementById("admin-risk-level").value);
+  try {
+    await contract.methods.setRiskStatus(user, risk)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-risk-result").innerText = "Risk status updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-risk-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Check Frozen & Whitelist
+async function checkStatus() {
+  const addr = document.getElementById("status-check-addr").value;
+  try {
+    const isFrozen = await contract.methods.frozen(addr).call();
+    const isWl = await contract.methods.whitelist(addr).call();
+    document.getElementById("status-output").innerText =
+      `Frozen: ${isFrozen}\nWhitelisted: ${isWl}`;
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status-output").innerText = "Error: " + err.message;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Anti-PhishingAML Upgraded DApp</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.7.3/dist/web3.min.js"></script>
+</head>
+<body>
+  <h3>🔒 Account Status Check</h3>
+  <input type="text" id="status-check-addr" placeholder="User Address">
+  <button onclick="checkStatus()">Check Frozen & Whitelist</button>
+  <pre id="status-output"></pre>
+  <hr>
+
+  <h3>🔐 Admin Tools</h3>
+  <p>Freeze/Unfreeze Account:</p>
+  <input type="text" id="admin-freeze-addr" placeholder="User Address">
+  <select id="admin-freeze-val">
+    <option value="true">Freeze</option>
+    <option value="false">Unfreeze</option>
+  </select>
+  <button onclick="freezeAccount()">Set Freeze</button>
+  <pre id="admin-freeze-result"></pre>
+
+  <p>Whitelist/Remove Whitelist:</p>
+  <input type="text" id="admin-wl-addr" placeholder="User Address">
+  <select id="admin-wl-val">
+    <option value="true">Whitelist</option>
+    <option value="false">Unwhitelist</option>
+  </select>
+  <button onclick="setWhitelist()">Set Whitelist</button>
+  <pre id="admin-wl-result"></pre>
+
+  <p>Set Risk Status:</p>
+  <input type="text" id="admin-risk-addr" placeholder="Target Address">
+  <select id="admin-risk-level">
+    <option value="0">Safe</option>
+    <option value="1">Suspicious</option>
+    <option value="2">Blacklisted</option>
+  </select>
+  <button onclick="setRiskStatus()">Set Risk Level</button>
+  <pre id="admin-risk-result"></pre>
+
+<script>
+let web3;
+let contract;
+const contractAddress = "0xD4Fc541236927E2EAf8F27606bD7309C1Fc2cbee"; 
+
+// ERC20 Minimal ABI
+const erc20Abi = [
+  {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
+  {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"}
+];
+
+let abi; // ABI sẽ load bằng fetch
+
+// Admin - Freeze
+async function freezeAccount() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-freeze-addr").value;
+  const freeze = document.getElementById("admin-freeze-val").value === "true";
+  try {
+    await contract.methods.freezeAccount(user, freeze)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-freeze-result").innerText = "Freeze updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-freeze-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Admin - Whitelist
+async function setWhitelist() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-wl-addr").value;
+  const wl = document.getElementById("admin-wl-val").value === "true";
+  try {
+    await contract.methods.setWhitelist(user, wl)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-wl-result").innerText = "Whitelist updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-wl-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Admin - Set Risk Status
+async function setRiskStatus() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-risk-addr").value;
+  const risk = parseInt(document.getElementById("admin-risk-level").value);
+  try {
+    await contract.methods.setRiskStatus(user, risk)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-risk-result").innerText = "Risk status updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-risk-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Check Frozen & Whitelist
+async function checkStatus() {
+  const addr = document.getElementById("status-check-addr").value;
+  try {
+    const isFrozen = await contract.methods.frozen(addr).call();
+    const isWl = await contract.methods.whitelist(addr).call();
+    document.getElementById("status-output").innerText =
+      `Frozen: ${isFrozen}\nWhitelisted: ${isWl}`;
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status-output").innerText = "Error: " + err.message;
+  }
+}
+</script>
+</body>
+</html>

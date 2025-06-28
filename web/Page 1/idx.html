@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Anti-PhishingAML Upgraded DApp</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.7.3/dist/web3.min.js"></script>
+</head>
+<body>
+  <h2>Anti-PhishingAML Upgraded DApp</h2>
+  <button onclick="connect()">Connect Wallet</button>
+  <p id="wallet-address"></p>
+  <hr>
+
+  <h3>1️⃣ Send ETH (Monitored)</h3>
+  <input type="text" id="recipient" placeholder="Recipient Address">
+  <input type="text" id="amount" placeholder="Amount in ETH">
+  <button onclick="sendEth()">Send ETH</button>
+  <br><br>
+  
+  <h3>2️⃣ Send ERC20 Token (Monitored)</h3>
+  <input type="text" id="erc20-token" placeholder="ERC20 Token Address">
+  <input type="text" id="erc20-recipient" placeholder="Recipient Address">
+  <input type="text" id="erc20-amount" placeholder="Amount (raw, e.g. 1000000)">
+  <button onclick="sendErc20()">Send ERC20</button>
+  <br>
+  <button onclick="approveErc20()">Approve ERC20 to Contract</button>
+  <input type="text" id="erc20-approve-amount" placeholder="Approve Amount">
+  <span style="font-size:13px;color:#888;">(Approve trước khi Send)</span>
+  <br><br>
+  
+  <h3>3️⃣ View My Logs (ETH & ERC20)</h3>
+  <button onclick="viewLogs()">View Logs</button>
+  <pre id="log-output"></pre>
+
+  <hr>
+
+<script>
+let web3;
+let contract;
+const contractAddress = "0xD4Fc541236927E2EAf8F27606bD7309C1Fc2cbee"; 
+
+// ERC20 Minimal ABI
+const erc20Abi = [
+  {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
+  {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"}
+];
+
+let abi; // ABI sẽ load bằng fetch
+
+async function connect() {
+  if (window.ethereum) {
+    web3 = new Web3(window.ethereum);
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const accounts = await web3.eth.getAccounts();
+    document.getElementById("wallet-address").innerText = "Connected: " + accounts[0];
+    // Load ABI từ file ngoài (abi.json)
+    const response = await fetch('abi.json');
+    abi = await response.json();
+    contract = new web3.eth.Contract(abi, contractAddress);
+  } else {
+    alert("Install MetaMask first.");
+  }
+}
+
+async function sendEth() {
+  const accounts = await web3.eth.getAccounts();
+  const recipient = document.getElementById("recipient").value;
+  const amount = web3.utils.toWei(document.getElementById("amount").value, "ether");
+  try {
+    await contract.methods.monitoredTransfer(recipient)
+      .send({ from: accounts[0], value: amount });
+    alert("Transfer successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Transfer failed! " + err.message);
+  }
+}
+
+async function sendErc20() {
+  const accounts = await web3.eth.getAccounts();
+  const token = document.getElementById("erc20-token").value;
+  const recipient = document.getElementById("erc20-recipient").value;
+  const amount = document.getElementById("erc20-amount").value;
+  try {
+    await contract.methods.monitoredTransferERC20(token, recipient, amount)
+      .send({ from: accounts[0] });
+    alert("ERC20 transfer successful!");
+  } catch (err) {
+    console.error(err);
+    alert("ERC20 transfer failed! " + err.message);
+  }
+}
+
+async function approveErc20() {
+  const accounts = await web3.eth.getAccounts();
+  const token = document.getElementById("erc20-token").value;
+  const amount = document.getElementById("erc20-approve-amount").value;
+  if (!web3.utils.isAddress(token)) {
+    alert("Invalid token address!");
+    return;
+  }
+  const erc20 = new web3.eth.Contract(erc20Abi, token);
+  try {
+    await erc20.methods.approve(contractAddress, amount).send({ from: accounts[0] });
+    alert("Approve successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Approve failed! " + err.message);
+  }
+}
+
+async function viewLogs() {
+  const accounts = await web3.eth.getAccounts();
+  try {
+    const logs = await contract.methods.getActivityHistory(accounts[0]).call();
+    // Fetch symbol for token if not ETH
+    for (let log of logs) {
+      if (log.token !== "0x0000000000000000000000000000000000000000") {
+        try {
+          const erc20 = new web3.eth.Contract(erc20Abi, log.token);
+          log.tokenSymbol = await erc20.methods.symbol().call();
+        } catch (e) { log.tokenSymbol = "(Unknown token)"; }
+      } else {
+        log.tokenSymbol = "ETH";
+      }
+      // Risk level name
+      log.riskName = ["Safe", "Suspicious", "Blacklisted"][log.risk] || log.risk;
+      // Convert timestamp to readable
+      log.time = new Date(log.timestamp * 1000).toLocaleString();
+    }
+    let pretty = logs.map(l => 
+      `[${l.time}] ${l.amount} ${l.tokenSymbol} | from: ${l.from.slice(0,6)}... to: ${l.to.slice(0,6)}... | risk: ${l.riskName}`
+    ).join('\n');
+    document.getElementById("log-output").innerText = pretty || "(No logs)";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("log-output").innerText = "Error loading logs.";
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./vars.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.7.3/dist/web3.min.js"></script>
+  
+  <style>
+   a,
+   button,
+   input,
+   select,
+   h1,
+   h2,
+   h3,
+   h4,
+   h5,
+   * {
+       box-sizing: border-box;
+       margin: 0;
+       padding: 0;
+       border: none;
+       text-decoration: none;
+       background: none;
+   
+       -webkit-font-smoothing: antialiased;
+   }
+   
+   menu, ol, ul {
+       list-style-type: none;
+       margin: 0;
+       padding: 0;
+   }
+        body {
+  zoom: 80%;
+}
+
+   </style>
+  <title>Admin</title>
+</head>
+<body>
+  <div class="frame-4">
+    <img
+      class="sl-0212121-40670-68-converted"
+      src="sl-0212121-40670-68-converted0.png"
+    />
+    <div class="rectangle-13"></div>
+    <div class="rectangle-1">
+       <input id="status-check-addr" placeholder="User Address"
+    style="width: 100%; height: 100%; padding: 10px;
+    font-size: 24px; background: transparent; border: none;
+    color: black; font-style: italic;" />
+</div>
+    </div>
+
+    <div class="rectangle-5">
+       <select id="admin-freeze-val"
+    style="width: 100%; height: 100%; padding: 10px;
+    font-size: 35px; background: transparent; border: none;
+    color: black; font-style: italic;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: none;">
+    <option value="true">Freeze</option>
+    <option value="false">Unfreeze</option>
+  </select>
+    </div>
+
+    <div class="rectangle-4">
+        <input id="admin-freeze-addr" placeholder="User Address"
+    style="width: 100%; height: 100%; padding: 10px;
+    font-size: 35px; background: transparent; border: none;
+    color: black; font-style: italic;" />
+    </div>
+   
+    <div class="account-status-check">Account Status Check</div>
+<div style="display: flex; align-items: center; gap: 20px;">
+<div class="rectangle-3">
+  <button id="check-btn" onclick="checkStatus(); showFinalMessage()" 
+    style="width: 100%; height: 100%; background: transparent; border: none; color: white;
+           font-size: 35px; font-weight: 800; font-style: italic; cursor: pointer;">
+    Check Frozen &amp; Whitelist
+  </button>
+</div>
+
+  <span id="final-status" style="
+    color: white;
+    font-style: italic;
+    font-weight: bold;
+    font-size: 35px;
+    white-space: nowrap;
+    font-family: inherit;
+  "></span>
+</div>
+    <img class="rectangle-6" src="rectangle-60.svg" />
+    <div class="set-freeze" onclick="freezeAccount()" style="cursor: pointer;">
+  <div style="display: flex; align-items: center; gap: 12px;">
+<div onclick="showFreezeDone()"  style="cursor: pointer;">
+
+    Set Freeze
+  </div>
+  <span id="freeze-status" style="
+  color: white;
+  font-style: italic;
+  font-weight: bold;
+  font-size: 35px;
+  white-space: nowrap;
+  margin-left: 30px;
+"></span>
+</div>
+</div>
+
+    <div class="admin-tools">Admin Tools</div>
+    <div class="freeze-unfreeze-account">Freeze/Unfreeze Account:</div>
+    <div class="rectangle-7">
+        <select id="admin-wl-val"
+    style="
+      width: 100%;
+      height: 100%;
+      padding: 0 10px;
+      font-size: 35px;
+      background: transparent;
+      border: none;
+      color: black;
+      font-style: italic;
+      appearance: none;            /* Xóa style mặc định */
+      -webkit-appearance: none;    /* Safari */
+      -moz-appearance: none;       /* Firefox */
+    ">
+    <option value="true">Whitelist</option>
+    <option value="false">Unwhitelist</option>
+  </select>
+    </div>
+    <img class="chevron-down" src="chevron-down0.svg" />
+
+    <div class="rectangle-8">
+<input id="admin-whitelist-addr" placeholder="User Address"
+    style="width: 100%; height: 100%; padding: 10px; font-size: 35px;
+    background: transparent; border: none; color: black; font-style: italic;" />
+    </div>
+
+    <img class="rectangle-9" src="rectangle-90.svg" />
+    <div class="set-whitelist" onclick="setWhitelist()" style="cursor: pointer;">
+ <div onclick="showWhitelistDone()" style="cursor: pointer;">
+    Set Whitelist
+  </div>
+  <span id="whitelist-status" style="
+ color: white;
+font-style: italic;
+font-weight: bold;
+font-size: 35px;
+white-space: nowrap;
+margin-left: 235px;   /* khoảng cách hợp lý với nút */
+top: -40px;     /* không đẩy xuống hay lên */
+position: relative;
+  "></span>
+</div>
+
+
+    <div class="whitelist-remove-whitelist">Whitelist/Remove Whitelist:</div>
+    <div class="rectangle-10">
+       <select id="admin-risk-level"
+    style="width: 100%; height: 100%; padding: 0 10px;
+    font-size: 35px; background: transparent; border: none;
+    color: black; font-style: italic;
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+    <option value="0">Safe</option>
+    <option value="1">Suspicious</option>
+    <option value="2">Blacklisted</option>
+  </select>
+    </div>
+ <div class="set-risk-status">Set Risk Status:
+</div>
+    <div class="rectangle-11">
+       <input id="admin-risk-addr" placeholder="Target Address"
+    style="width: 100%; height: 100%; padding: 10px;
+    font-size: 35px; background: transparent; border: none;
+    color: black; font-style: italic;" />
+    </div>
+
+    <img class="rectangle-12" src="rectangle-120.svg" />
+<div style="display: flex; align-items: center; gap: 16px;">
+  <div class="set-risk-level" onclick="showRiskDone()" style="cursor: pointer;">
+    Set Risk Level
+  </div>
+  <span id="risk-status" style="
+    color: white;
+    font-style: italic;
+    font-weight: bold;
+    font-size: 35px;
+    white-space: nowrap;
+    position: relative;
+    margin-left: 1485px;   /* khoảng cách hợp lý với nút */
+    top: -271px;
+      font-family: 'Segoe UI', sans-serif;
+  "></span>
+</div>
+
+    <img class="chevron-down2" src="chevron-down1.svg" />
+    <img class="chevron-down3" src="chevron-down2.svg" />
+
+  </div>
+<script>
+let web3;
+let contract;
+const contractAddress = "0xD4Fc541236927E2EAf8F27606bD7309C1Fc2cbee"; 
+
+// ERC20 Minimal ABI
+const erc20Abi = [
+  {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
+  {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"}
+];
+
+let abi; // ABI sẽ load bằng fetch
+
+async function connect() {
+  if (window.ethereum) {
+    web3 = new Web3(window.ethereum);
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    const accounts = await web3.eth.getAccounts();
+    document.getElementById("wallet-address").innerText = "Connected: " + accounts[0];
+    // Load ABI từ file ngoài (abi.json)
+    const response = await fetch('abi.json');
+    abi = await response.json();
+    contract = new web3.eth.Contract(abi, contractAddress);
+  } else {
+    alert("Install MetaMask first.");
+  }
+}
+
+async function sendEth() {
+  const accounts = await web3.eth.getAccounts();
+  const recipient = document.getElementById("recipient").value;
+  const amount = web3.utils.toWei(document.getElementById("amount").value, "ether");
+  try {
+    await contract.methods.monitoredTransfer(recipient)
+      .send({ from: accounts[0], value: amount });
+    alert("Transfer successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Transfer failed! " + err.message);
+  }
+}
+
+async function sendErc20() {
+  const accounts = await web3.eth.getAccounts();
+  const token = document.getElementById("erc20-token").value;
+  const recipient = document.getElementById("erc20-recipient").value;
+  const amount = document.getElementById("erc20-amount").value;
+  try {
+    await contract.methods.monitoredTransferERC20(token, recipient, amount)
+      .send({ from: accounts[0] });
+    alert("ERC20 transfer successful!");
+  } catch (err) {
+    console.error(err);
+    alert("ERC20 transfer failed! " + err.message);
+  }
+}
+
+async function approveErc20() {
+  const accounts = await web3.eth.getAccounts();
+  const token = document.getElementById("erc20-token").value;
+  const amount = document.getElementById("erc20-approve-amount").value;
+  if (!web3.utils.isAddress(token)) {
+    alert("Invalid token address!");
+    return;
+  }
+  const erc20 = new web3.eth.Contract(erc20Abi, token);
+  try {
+    await erc20.methods.approve(contractAddress, amount).send({ from: accounts[0] });
+    alert("Approve successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Approve failed! " + err.message);
+  }
+}
+
+async function viewLogs() {
+  const accounts = await web3.eth.getAccounts();
+  try {
+    const logs = await contract.methods.getActivityHistory(accounts[0]).call();
+    // Fetch symbol for token if not ETH
+    for (let log of logs) {
+      if (log.token !== "0x0000000000000000000000000000000000000000") {
+        try {
+          const erc20 = new web3.eth.Contract(erc20Abi, log.token);
+          log.tokenSymbol = await erc20.methods.symbol().call();
+        } catch (e) { log.tokenSymbol = "(Unknown token)"; }
+      } else {
+        log.tokenSymbol = "ETH";
+      }
+      // Risk level name
+      log.riskName = ["Safe", "Suspicious", "Blacklisted"][log.risk] || log.risk;
+      // Convert timestamp to readable
+      log.time = new Date(log.timestamp * 1000).toLocaleString();
+    }
+    let pretty = logs.map(l => 
+      `[${l.time}] ${l.amount} ${l.tokenSymbol} | from: ${l.from.slice(0,6)}... to: ${l.to.slice(0,6)}... | risk: ${l.riskName}`
+    ).join('\n');
+    document.getElementById("log-output").innerText = pretty || "(No logs)";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("log-output").innerText = "Error loading logs.";
+  }
+}
+
+// Admin - Freeze
+async function freezeAccount() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-freeze-addr").value;
+  const freeze = document.getElementById("admin-freeze-val").value === "true";
+  try {
+    await contract.methods.freezeAccount(user, freeze)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-freeze-result").innerText = "Freeze updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-freeze-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Admin - Whitelist
+async function setWhitelist() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-wl-addr").value;
+  const wl = document.getElementById("admin-wl-val").value === "true";
+  try {
+    await contract.methods.setWhitelist(user, wl)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-wl-result").innerText = "Whitelist updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-wl-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Admin - Set Risk Status
+async function setRiskStatus() {
+  const accounts = await web3.eth.getAccounts();
+  const user = document.getElementById("admin-risk-addr").value;
+  const risk = parseInt(document.getElementById("admin-risk-level").value);
+  try {
+    await contract.methods.setRiskStatus(user, risk)
+      .send({ from: accounts[0] });
+    document.getElementById("admin-risk-result").innerText = "Risk status updated!";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("admin-risk-result").innerText = "Error: " + err.message;
+  }
+}
+
+// Check Frozen & Whitelist
+async function checkStatus() {
+  const addr = document.getElementById("status-check-addr").value;
+  try {
+    const isFrozen = await contract.methods.frozen(addr).call();
+    const isWl = await contract.methods.whitelist(addr).call();
+    document.getElementById("status-output").innerText =
+      `Frozen: ${isFrozen}\nWhitelisted: ${isWl}`;
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status-output").innerText = "Error: " + err.message;
+  }
+}
+function showFreezeDone() {
+  const addr = document.getElementById("admin-freeze-addr").value.trim();
+  const statusSpan = document.getElementById("freeze-status");
+
+  if (addr.length >= 26) {
+    statusSpan.innerText = "Done";
+  } else {
+    statusSpan.innerText = "";
+  }
+}
+
+
+function showWhitelistDone() {
+  const addr = document.getElementById("admin-whitelist-addr").value.trim();
+  const statusSpan = document.getElementById("whitelist-status");
+
+  if (addr.length >= 26) {
+    statusSpan.innerText = "Done";
+  } else {
+    statusSpan.innerText = "";
+  }
+}
+
+  function showRiskDone() {
+    const addr = document.getElementById("admin-risk-addr").value.trim();
+    const statusSpan = document.getElementById("risk-status");
+
+    if (addr.length >= 26) {
+      statusSpan.innerText = "Done";
+    } else {
+      statusSpan.innerText = "";
+    }
+  }
+function showFinalMessage() {
+  const freeze = document.getElementById("freeze-status").innerText;
+  const whitelist = document.getElementById("whitelist-status").innerText;
+  const risk = document.getElementById("risk-status").innerText;
+  const button = document.getElementById("check-btn");
+
+  if (freeze === "Done" || whitelist === "Done" || risk === "Done") {
+    button.innerText = "Has been set";
+  } else {
+    button.innerText = "Check Frozen & Whitelist";
+  }
+}
+</script>
+</body>
+</html>
